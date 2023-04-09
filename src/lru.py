@@ -1,25 +1,30 @@
 import json
+from cachetools import LRUCache
 
-def LRU(resposta, cache):
-    with open("database.json", encoding="utf-8") as database:
-        data = json.load(database)
-    
-    # Busca a resposta no banco de dados
-    for i in data:
-        if i['id'] == resposta:
-            print(f"Título: {i['titulo']}")
-            print(f"Autor: {i['autor']}")
-            print(f"Conteúdo: {i['conteudo']}")
-            
-            # Insere a resposta na lista cache
-            cache.append(i)
-            
-            # Remove o primeiro item da lista cache, caso já tenha 10 itens
-            if len(cache) > 10:
-                cache.pop(0)
-            break
-            
+cache = LRUCache(maxsize=10)
+
+def lista(resposta):
+    if resposta in cache:
+        item = cache[resposta]
+        item['contador'] += 1
+        print(f"Título: {item['titulo']}")
+        print(f"Autor: {item['autor']}")
+        print(f"Conteúdo: {item['conteudo']}")
     else:
-        print("Resposta não encontrada no banco de dados.")
-        
+        with open("database.json", encoding="utf-8") as database:
+            data = json.load(database)
+            for i in data:
+                if i["id"] == resposta:
+                    item = {'id': i['id'], 'titulo': i['titulo'], 'autor': i['autor'], 'conteudo': i['conteudo'], 'contador': 1}
+                    cache[resposta] = item
+                    print(f"Título: {item['titulo']}")
+                    print(f"Autor: {item['autor']}")
+                    print(f"Conteúdo: {item['conteudo']}")
+                    break
+            else:
+                print("Item não encontrado")
+                return None
+    print("Cache atual:")
+    for key, value in cache.items():
+        print(f"{key}: {value}")
     return cache
